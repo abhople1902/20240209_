@@ -1,6 +1,19 @@
 // Description: File I/O operations using Node.js
+
+//Current bug - let the user decide the update parameters
+//              make cases 6 and 7 more robust
+//              The file name not getting updated properly when directory name is updated; new file in one level up is created
 const fs = require('fs');
 const path = require('path');
+
+const mainDirPath = '/Users/abhople/Documents/20240209_/';
+const directoryPath = '/Users/abhople/Documents/20240209_/testDir';
+const newDirname = 'newtestDir';
+let DirFlag = false
+let fileFlag = false
+
+
+
 
 /**
  * Function to check if a directory exists
@@ -28,6 +41,8 @@ function fileExists(filePath) {
   }
 }
 
+
+////////  CREATE OPERATIONS
 /**
  * Function to create a directory
  * @param {String} directoryPath 
@@ -74,50 +89,81 @@ function createFile(directoryPath, fileName) {
   }
 }
 
-/**
- * Function to write content to a file
- * @param {String} directoryPath 
- * @param {String} fileName 
- * @param {String} fileContent 
- * @returns {void}
- */
-function writeFileContent(directoryPath, fileName, fileContent) {
-  const filePath = path.join(directoryPath, fileName);
-  if (fileExists(filePath)) {
-    fs.writeFile(filePath, fileContent, (err) => {
-      if (err) {
-        console.error(`Error writing content to file: ${err}`);
-      } else {
-        console.log(`Content updated in file '${fileName}' successfully in directory '${directoryPath}'.`);
+
+
+// Function to prompt user for JSON schema input
+function promptForSchema() {
+  return new Promise((resolve, reject) => {
+    rl.question('Please enter the JSON schema: ', (input) => {
+      try {
+        const schema = JSON.parse(input);
+        resolve(schema);
+      } catch (error) {
+        reject('Invalid JSON schema. Please try again.');
       }
     });
-  } else {
-    console.log(`File '${fileName}' does not exist in directory '${directoryPath}'.`);
+  });
+}
+
+// Function to create JSON schema (file content)
+async function createSchema() {
+  try {
+    const schema = await promptForSchema();
+    let schemaFilePath = ""
+    // Save the schema to a JSON file
+    if(fileFlag){
+      if(DirFlag){
+        schemaFilePath = mainDirPath + newDirname + '/newTest.json';
+      } else {
+        schemaFilePath = directoryPath + '/newTest.json';
+      }
+    } else {
+      if(DirFlag){
+        schemaFilePath = mainDirPath + newDirname + '/test.json';
+      } else {
+        schemaFilePath = directoryPath + '/test.json';
+      }
+    }
+    fs.writeFileSync(schemaFilePath, JSON.stringify(schema, null, 2));
+
+    console.log(`Schema successfully created and saved to ${schemaFilePath}`);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    console.log("Schema written")
   }
 }
 
 
 
-/**
- * Renames a file in the specified directory
- * @param {String} directoryPath 
- */
-function UpdateFile(directoryPath, oldFileName, newFileName) {
-  if (oldFileName !== newFileName) {
-    const newFilePath = path.join(directoryPath, newFileName);
-    fs.rename(oldFilePath, newFilePath, (err) => {
-      if (err) {
-        console.error(`Error renaming file: ${err}`);
-      } else {
-        console.log(`File '${oldFileName}' renamed to '${newFileName}' successfully in directory '${directoryPath}'.`);
-      }
-    });
-  }
+
+
+
+
+
+
+
+
+
+
+/////////////// UPDATE OPERATION
+
+function updateDirectoryName(directoryPath, newDirName) {
+  fs.renameSync(directoryPath, newDirName);
+  console.log(`Directory name updated to ${newDirName}`);
+}
+
+
+function updateFileName(existingFilePath, newFileName) {
+  fs.renameSync(existingFilePath, newFileName);
+  console.log(`File name updated to ${newFileName}`);
 }
 
 
 
 
+
+//////////////// DELETION OPERATION
 /**
  * Deletes a file from the specified directory
  * @param {String} directoryPath 
@@ -141,47 +187,118 @@ function deleteFile(directoryPath, fileName) {
 
 
 
-
-////////////////////////////////////////////////////////////////////////
-// Main
-const directoryPath = '/Users/abhople/Desktop/testDir/';
-const oldFileName = 'a.txt';
-const oldFileContent = 'Hello, this is my old file content!';
-const newFileName = 'updatedFile.txt';
-
-
-// Operation to perform
-const operation = 'createDirectory';
-
-
-switch (operation) {
-  case 'createDirectory':
-    if (!directoryExists(directoryPath)) {
-      createDirectory(directoryPath);
-    }
-    break;
-
-  case 'createFile':
-    const oldFilePath = path.join(directoryPath, oldFileName);
-    if (!fileExists(oldFilePath)) {
-      createFile('/Users/abhople/Desktop/testDir/', 'a.txt');
-    }
-    break;
-
-  case 'writeFileContent':
-    writeFileContent(directoryPath, oldFileName, oldFileContent);
-    break;
-
-  case 'updateFileName':
-    UpdateFile(directoryPath, oldFileName, newFileName);
-    break;
-
-  case 'deleteFile':
-    deleteFile(directoryPath, newFileName);
-    break;
-
-  default:
-    console.log('Invalid operation.');
+function deleteFolder(folderPath) {
+  if (fs.existsSync(folderPath)) {
+    fs.readdirSync(folderPath).forEach((file, index) => {
+      const curPath = `${folderPath}/${file}`;
+      if (fs.lstatSync(curPath).isDirectory()) { // recurse
+        deleteFolder(curPath);
+      } else { // delete file
+        fs.unlinkSync(curPath);
+      }
+    });
+    fs.rmdirSync(folderPath);
+    console.log(`Folder ${folderPath} deleted successfully.`);
+  } else {
+    console.log(`Folder ${folderPath} does not exist.`);
+  }
 }
 
 
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////
+// Main
+
+const readline = require('readline');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+let exitLoop = false;
+
+function printOptions() {
+  console.log("Options:");
+  console.log("Create Directory - 1");
+  console.log("Create new file - 2");
+  console.log("Create and write new schema (can be also used for updating) - 3");
+  console.log("Updating Directory name - 4");
+  console.log("Updating file name - 5");
+  console.log("Deleting folder - 6");
+  console.log("Deleting file - 7");
+}
+
+printOptions()
+console.log("\n")
+
+rl.on('line', (input) => {
+
+  printOptions()
+  console.log("\n")
+
+  switch (input.trim()) {
+    case '1':
+      console.log("Creating directory...");
+      createDirectory(directoryPath);
+      break;
+    case '2':
+      if(DirFlag){
+        createFile(newDirname, "test.json")
+      } else {
+        createFile(directoryPath, "test.json")
+      }
+      break;
+    case '3':
+      console.log("Creating the schema and writing to file...");
+      createSchema();
+      break;
+    case '4':
+      console.log("Updating Directory")
+      updateDirectoryName(directoryPath, newDirname)
+      DirFlag = true
+      break;
+    case '5':
+      console.log("Updating file name")
+      if(DirFlag){
+        updateFileName(mainDirPath + newDirname +'/test.json', "newTest.json")
+        fileFlag = true
+      } else {
+        updateFileName(directoryPath+'/test.json', "newTest.json")
+        fileFlag = true
+      }
+      break;
+    case '6':
+      console.log("Deleting file")
+      if(DirFlag && fileFlag){
+        deleteFile(mainDirPath+newDirname, directoryPath + '/newTest.json')
+      } else {
+        deleteFile(directoryPath, directoryPath + 'test.json')
+      }
+    case 7:
+      console.log("Deleting folder")
+      if(DirFlag){
+        deleteFolder(mainDirPath+newDirname)
+      } else {
+        deleteFolder(directoryPath)
+      }
+    case "exit":
+      console.log("Exiting the loop...");
+      exitLoop = true;
+      rl.close();
+      break;
+    default:
+      console.log("Unknown command. Please try again.");
+      break;
+  }
+
+  if (exitLoop) {
+    rl.close();
+  }
+});
