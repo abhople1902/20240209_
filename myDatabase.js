@@ -91,7 +91,10 @@ function createFile(directoryPath, fileName) {
 
 
 
-// Function to prompt user for JSON schema input
+/**
+ * 
+ * Function to prompt user for JSON schema input
+ */
 function promptForSchema() {
   return new Promise((resolve, reject) => {
     rl.question('Please enter the JSON schema: ', (input) => {
@@ -147,19 +150,64 @@ async function createSchema() {
 
 
 /////////////// UPDATE OPERATION
-
+/**
+ * Updating directory name
+ * @param {String} directoryPath 
+ * @param {String} newDirName 
+ * @returns {void}
+ */
 function updateDirectoryName(directoryPath, newDirName) {
   fs.renameSync(directoryPath, newDirName);
   console.log(`Directory name updated to ${newDirName}`);
 }
 
-
+/**
+ * updating file name
+ * @param {String} existingFilePath 
+ * @param {String} newFileName 
+ * @returns {void}
+ */
 function updateFileName(existingFilePath, newFileName) {
   fs.renameSync(existingFilePath, newFileName);
   console.log(`File name updated to ${newFileName}`);
 }
 
 
+
+/**
+ * Updating file content
+ * Appending in the file
+ * @param {String} filePath
+ * @param {String} content
+ * @returns {void}
+ */
+async function appendSchema() {
+  try {
+    const schema = await promptForSchema();
+    let schemaFilePath = ""
+    // Save the schema to a JSON file
+    if(fileFlag){
+      if(DirFlag){
+        schemaFilePath = mainDirPath + newDirname + '/newTest.json';
+      } else {
+        schemaFilePath = directoryPath + '/newTest.json';
+      }
+    } else {
+      if(DirFlag){
+        schemaFilePath = mainDirPath + newDirname + '/test.json';
+      } else {
+        schemaFilePath = directoryPath + '/test.json';
+      }
+    }
+    fs.appendFileSync(schemaFilePath, JSON.stringify(schema, null, 2));
+
+    console.log(`Schema successfully updated and saved to ${schemaFilePath}`);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    console.log("Schema written")
+  }
+}
 
 
 
@@ -229,6 +277,7 @@ function printOptions() {
   console.log("Create Directory - 1");
   console.log("Create new file - 2");
   console.log("Create and write new schema (can be also used for updating) - 3");
+  console.log("Updating File content by appending - 8");
   console.log("Updating Directory name - 4");
   console.log("Updating file name - 5");
   console.log("Deleting folder - 6");
@@ -281,13 +330,17 @@ rl.on('line', (input) => {
       } else {
         deleteFile(directoryPath, directoryPath + 'test.json')
       }
-    case 7:
+    case '7':
       console.log("Deleting folder")
       if(DirFlag){
         deleteFolder(mainDirPath+newDirname)
       } else {
         deleteFolder(directoryPath)
       }
+    case '8':
+      console.log("Updating file content by appending")
+      appendSchema()
+      break;
     case "exit":
       console.log("Exiting the loop...");
       exitLoop = true;
