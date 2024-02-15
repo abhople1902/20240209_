@@ -152,6 +152,36 @@ async function createSchema() {
 
 
 
+/////////////// READ OPERATION
+/**
+ * Function to read JSON data from a file
+ * @param {String} filePath
+ * @returns {Object}
+ * @returns {null}
+ */
+function readJsonFile(filePath) {
+  try {
+    const jsonData = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(jsonData);
+  } catch (error) {
+    console.error(`Error reading JSON file: ${error}`);
+    return null;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /////////////// UPDATE OPERATION
 /**
  * Updating directory name
@@ -334,6 +364,7 @@ module.exports = {
   createDirectory,
   createFile,
   createSchema,
+  readJsonFile,
   updateDirectoryName,
   updateFileName,
   appendSchema,

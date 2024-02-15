@@ -6,6 +6,7 @@ const {
   createDirectory,
   createFile,
   createSchema,
+  readJsonFile,
   updateDirectoryName,
   updateFileName,
   deleteFile,
@@ -45,6 +46,7 @@ function printOptions() {
   console.log("Updating File content by appending - 8");
   console.log("Updating keys - 9");
   console.log("Updating values - 10");
+  console.log("Read file - 11");
 }
 
 printOptions()
@@ -113,6 +115,15 @@ rl.on('line', (input) => {
     case '10':
       console.log("Updating values")
       updateJsonValues(directoryPath + '/test.json', { "name": { "value": "newName" } })
+      break;
+    case '11':
+      console.log("Reading file")
+      const jsonData = readJsonFile(directoryPath + '/test.json');
+      if (jsonData) {
+        console.log(jsonData);
+      } else {
+        console.log('Error reading JSON file.');
+      }
       break;
     case "exit":
       console.log("Exiting the loop...");
